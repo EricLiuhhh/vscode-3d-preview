@@ -17,12 +17,14 @@ function isMeshSupport(fileToLoad) {
     case 'ply': return true;
     case 'xyz': return false;
     case 'pcd': return false;
+    case 'bin': return false;
     default:    return true;
   }
 }
 
-function createModelLoader(fileToLoad) {
+function createModelLoader(fileToLoad, loaderParams = {}) {
   switch(extname(fileToLoad)) {
+    case 'bin': return new THREE.BINLoader(loaderParams);
     case 'stl': return new THREE.STLLoader();
     case 'ply': return new THREE.PLYLoader();
     case 'xyz': return new THREE.XYZLoader();

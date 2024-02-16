@@ -1,23 +1,24 @@
 {
-  "name": "vscode-3d-preview",
-  "publisher": "tatsy",
-  "displayName": "vscode-3d-preview",
+  "name": "vscode-3d-preview-eric",
+  "publisher": "EricLiu",
+  "displayName": "vscode-3d-preview-eric",
   "description": "VS Code 3D Preview",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "icon": "logo.png",
-  "homepage": "https://github.com/tatsy/vscode-3d-preview",
+  "homepage": "https://github.com/EricLiuhhh/vscode-3d-preview.git",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tatsy/vscode-3d-preview"
+    "url": "https://github.com/EricLiuhhh/vscode-3d-preview.git"
   },
   "engines": {
-    "vscode": "^1.55.0"
+    "vscode": "^1.73.0"
   },
   "categories": [
     "Other"
   ],
   "keywords": [
     "3d",
+    "bin",
     "obj",
     "off",
     "pcd",
@@ -46,6 +47,9 @@
         "viewType": "3dpreview.viewer",
         "displayName": "3D Viewer Light",
         "selector": [
+          {
+            "filenamePattern": "*.bin"
+          },
           {
             "filenamePattern": "*.obj"
           },
@@ -90,6 +94,11 @@
           "default": true,
           "description": "Show mesh triangles."
         },
+        "3dpreview.showAxesHelper": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show axes helper."
+        },
         "3dpreview.showGridHelper": {
           "type": "boolean",
           "default": true,
@@ -109,11 +118,6 @@
           "type": "string",
           "default": "#0000ff",
           "description": "Default wireframe color."
-        },
-        "3dpreview.fogDensity": {
-          "type": "number",
-          "default": 0,
-          "description": "Fog density."
         }
       }
     }

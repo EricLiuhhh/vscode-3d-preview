@@ -22,6 +22,7 @@ This extension supports 3D formats equally as [Open3D](http://www.open3d.org/doc
 | ply | o | o |
 | stl | x | o |
 | xyz | o | x |
+| bin | o | x | 
 
 #### Mesh preview
 

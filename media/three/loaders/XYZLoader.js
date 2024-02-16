@@ -3,7 +3,6 @@
 	class XYZLoader extends THREE.Loader {
 
 		load( url, onLoad, onProgress, onError ) {
-
 			const scope = this;
 			const loader = new THREE.FileLoader( this.manager );
 			loader.setPath( this.path );
@@ -46,8 +45,8 @@
 				line = line.trim();
 				if ( line.charAt( 0 ) === '#' ) continue; // skip comments
 
-				const lineValues = line.split( /\s+/ );
-
+				//const lineValues = line.split( /\s+/ );
+				const lineValues = line.split( ',' );
 				if ( lineValues.length === 3 ) {
 
 					// XYZ

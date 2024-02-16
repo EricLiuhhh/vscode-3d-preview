@@ -64,7 +64,8 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
     webviewPanel.webview.options = {
       enableScripts: true,
     };
-    webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, document);
+    //webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, document);
+    this.getHtmlForWebview(webviewPanel.webview, document).then((value:string) => {webviewPanel.webview.html=value});
 
     webviewPanel.webview.onDidReceiveMessage(e => this.onMessage(document, e));
 
@@ -88,7 +89,7 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
     ));
   }
 
-  private getSettings(uri: vscode.Uri): string {
+  private getSettings(uri: vscode.Uri, extSettings = {}): string {
     const config = vscode.workspace.getConfiguration('3dpreview');
     const initialData = {
       fileToLoad: uri.toString(),
@@ -100,12 +101,14 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
       showWireframe: config.get('showWireframe', false),
       showMesh: config.get('showMesh', true),
       showGridHelper: config.get('showGridHelper', true),
+      showAxesHelper: config.get('showAxesHelper', true),
       pointColor: config.get('pointColor', '#cc0000'),
       wireframeColor: config.get('wireframeColor', '#0000ff'),
-      fogDensity: config.get('fogDensity', 0.01),
+      //fogDensity: config.get('fogDensity', 0.01),
 
     };
-    return `<meta id="vscode-3dviewer-data" data-settings="${JSON.stringify(initialData).replace(/"/g, '&quot;')}">`;
+    const settings = {...initialData, ...extSettings};
+    return `<meta id="vscode-3dviewer-data" data-settings="${JSON.stringify(settings).replace(/"/g, '&quot;')}">`;
   }
 
   private getScripts(webview: vscode.Webview, nonce: string): string {
@@ -124,6 +127,7 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
       this.getMediaWebviewUri(webview, 'three/loaders/XYZLoader.js'),
       this.getMediaWebviewUri(webview, 'three/loaders/PCDLoader.js'),
       this.getMediaWebviewUri(webview, 'three/loaders/PLYLoader.js'),
+      this.getMediaWebviewUri(webview, 'three/loaders/BINLoader.js'),
       this.getMediaWebviewUri(webview, 'utils.js'),
       this.getMediaWebviewUri(webview, 'viewer.js'),
     ];
@@ -133,7 +137,7 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
   /**
    * get the static HTML used in our webviews.
    */
-  private getHtmlForWebview(webview: vscode.Webview, document: MeshDocument): string {
+  private async getHtmlForWebview(webview: vscode.Webview, document: MeshDocument): Promise<string> {
     const fileToLoad = document.uri.scheme === 'file' ?
       webview.asWebviewUri(vscode.Uri.file(document.uri.fsPath)) :
       document.uri;
@@ -142,7 +146,12 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
     const styleUri = this.getMediaWebviewUri(webview, 'viewer.css');
     const mediaUri = this.getMediaWebviewUri(webview, '');
     const nonce = getNonce();
-
+    
+    var extSettings = {};
+    if (fileToLoad.toString().split('.').pop()?.toLowerCase() === 'bin') {
+      const featSelect = await vscode.window.showQuickPick(['None', 'intensity', 'r g b', 'intensity time', 'rcs vr vrc time'], {canPickMany: false});
+      extSettings = {...extSettings, ...{ptFeats: featSelect}};
+    }
     return `
       <!DOCTYPE html>
       <html lang="en">
@@ -153,7 +162,7 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
 
         <base href="${mediaUri}/">
         <link href="${styleUri}" rel="stylesheet" />
-        ${this.getSettings(fileToLoad)}
+        ${this.getSettings(fileToLoad, extSettings)}
 
         <title>3D Mesh Viewer Light</title>
       </head>
@@ -162,6 +171,18 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
       </body>
       </html>`;
   }
+
+  private readonly _blankpage = `
+                                <!DOCTYPE html>
+                                <html lang="en">
+                                <head>
+                                  <meta charset="UTF-8">
+                                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                  <title>3D Mesh Viewer Light</title>
+                                </head>
+                                <body>
+                                </body>
+                                </html>`;
 
   private readonly _callbacks = new Map<number, (response: any) => void>();
 

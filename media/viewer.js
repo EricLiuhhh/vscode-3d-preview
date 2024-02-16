@@ -50,11 +50,13 @@ class Viewer {
   initGui() {
     // geometry based parameter update
     const extent = getBBoxMaxExtent(this.points.geometry);
-    this.params.pointSize = extent / 100.0;
-    this.params.pointMaxSize = extent / 10.0;
+    this.params.pointSize = extent / 1000.0;
+    this.params.pointMaxSize = extent / 100.0;
 
-    this.params.gridHelper.unit = Math.pow(10, Math.floor(Math.log10(extent)));
-    this.params.gridHelper.size = this.params.gridHelper.unit * 1000;
+    // this.params.gridHelper.unit = Math.pow(10, Math.floor(Math.log10(extent)));
+    // this.params.gridHelper.size = this.params.gridHelper.unit * 1000;
+    this.params.gridHelper.unit = 1;
+    this.params.gridHelper.size = extent;
 
     // set gui
     console.log(this.params);
@@ -73,9 +75,11 @@ class Viewer {
       .name('Mesh');
     this.gui.addColor(this.params, 'backgroundColor')
       .name('Background color');
-    this.gui.add(this.params, 'fogDensity')
-      .min(0).max(1)
-      .name('Fog');
+    this.gui.add(this.params, 'showAxesHelper')
+      .name('showAxes');
+    // this.gui.add(this.params, 'fogDensity')
+    //   .min(0).max(1)
+    //   .name('Fog');
 
     if (this.params.hideControlsOnStart) {
       this.gui.close();
@@ -97,7 +101,7 @@ class Viewer {
   }
 
   initScene() {
-    this.scene.fog = new THREE.FogExp2(this.params.backgroundColor, this.params.fogDensity);
+    //this.scene.fog = new THREE.FogExp2(this.params.backgroundColor, this.params.fogDensity);
     this.scene.background = new THREE.Color(this.params.backgroundColor);
   }
 
@@ -121,7 +125,11 @@ class Viewer {
     const camPos = autoCameraPos(this.points.geometry);
 
     this.camera.position.copy(camPos);
-    this.controls = new THREE.TrackballControls(this.camera, this.renderer.domElement);
+    this.camera.up = new THREE.Vector3(0, 0, 1);
+    //this.controls = new THREE.TrackballControls(this.camera, this.renderer.domElement);
+    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.rotateSpeed = 0.3;
+    this.controls.zoomSpeed = 1.5;
     this.controls.target = camTarget;
   }
 
@@ -142,7 +150,7 @@ class Viewer {
 
     // BBox center
     var center = getBBoxCenter(this.points.geometry);
-    var extent = getBBoxMaxExtent(this.points.geometry);
+    // var extent = getBBoxMaxExtent(this.points.geometry);
 
     // Grid helper
     const size = this.params.gridHelper.size;
@@ -152,17 +160,18 @@ class Viewer {
       this.gridHelper.size !== size ||
       this.gridHelper.divisions !== divisions) {
       this.gridHelper = new THREE.GridHelper(size, divisions);
+      this.gridHelper.rotateX(Math.PI / 2);
       // this.gridHelper.position.set(center);
       this.gridHelper.name = 'gridHelper';
     }
 
     // Axis helper
     if (this.axisHelper === null) {
-      console.log(extent);
-      this.axisHelper = new THREE.AxisHelper(extent);
-      this.axisHelper.position.x += center.x - extent * 0.5;
-      this.axisHelper.position.y += center.y - extent * 0.5;
-      this.axisHelper.position.z += center.z - extent * 0.5;
+      //console.log(extent);
+      this.axisHelper = new THREE.AxisHelper();
+      //this.axisHelper.position.x += center.x - extent * 0.5;
+      //this.axisHelper.position.y += center.y - extent * 0.5;
+      //this.axisHelper.position.z += center.z - extent * 0.5;
       this.axisHelper.material.linewidth = 10;
       this.axisHelper.name = 'axisHelper';
     }
@@ -170,6 +179,10 @@ class Viewer {
     // Display
     if (this.params.showGridHelper) {
       this.scene.add(this.gridHelper);
+      //this.scene.add(this.axisHelper);
+    }
+    if (this.params.showAxesHelper) {
+      //this.scene.add(this.gridHelper);
       this.scene.add(this.axisHelper);
     }
   }
@@ -213,7 +226,12 @@ class Viewer {
   addMesh(fileToLoad) {
     const self = this;
     const base = basename(fileToLoad);
-    const loader = createModelLoader(fileToLoad);
+    const ext = extname(fileToLoad);
+    var loaderParams = {};
+    if (ext === 'bin'){
+      loaderParams.ptFeats = self.params.ptFeats;
+    }
+    const loader = createModelLoader(fileToLoad, loaderParams);
 
     loader.load(fileToLoad, function (object) {
       var geometry;
@@ -247,11 +265,11 @@ class Viewer {
       this.params.showPoints = !meshSupport;
   
       // add points
-      const sprite = new THREE.TextureLoader().load('three/textures/sprites/disc.png');
+      //const sprite = new THREE.TextureLoader().load('three/textures/sprites/disc.png');
       var pointsMaterial = new THREE.PointsMaterial({
         size: 35,
         sizeAttenuation: true,
-        map: sprite,
+        //map: sprite,
         alphaTest: 0.5,
         transparent: true
       });
