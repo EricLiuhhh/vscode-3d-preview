@@ -102,6 +102,7 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
       showMesh: config.get('showMesh', true),
       showGridHelper: config.get('showGridHelper', true),
       showAxesHelper: config.get('showAxesHelper', true),
+      cameraViewUp: config.get('cameraViewUp', 'z+'),
       pointColor: config.get('pointColor', '#cc0000'),
       wireframeColor: config.get('wireframeColor', '#0000ff'),
       //fogDensity: config.get('fogDensity', 0.01),

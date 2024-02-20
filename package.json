@@ -1,6 +1,6 @@
 {
   "name": "vscode-3d-preview-eric",
-  "publisher": "EricLiu",
+  "publisher": "ericliuhhh",
   "displayName": "vscode-3d-preview-eric",
   "description": "VS Code 3D Preview",
   "version": "0.2.2",
@@ -103,6 +103,11 @@
           "type": "boolean",
           "default": true,
           "description": "Show grid helper."
+        },
+        "3dpreview.cameraViewUp": {
+          "type": "string",
+          "default": "z+",
+          "description": "Choice camera view."
         },
         "3dpreview.backgroundColor": {
           "type": "string",

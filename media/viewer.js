@@ -32,11 +32,20 @@ class Viewer {
       size: 2000,
       unit: 1
     };
+    this.cameraViewUpChoices = {
+      'x+': [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0)],
+      'x-': [new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0)],
+      'y+': [new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 1)],
+      'y-': [new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 1)],
+      'z+': [new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0)],
+      'z-': [new THREE.Vector3(0, 0, -1), new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0)],
+    };
 
     // GUI
     this.initRenderer();
     this.initScene();
     this.initLight();
+    this.initHelpers();
 
     // check extension
     this.addMesh(this.params.fileToLoad);
@@ -77,6 +86,16 @@ class Viewer {
       .name('Background color');
     this.gui.add(this.params, 'showAxesHelper')
       .name('showAxes');
+    this.gui.add(this.params, 'cameraViewUp', ['x+', 'x-', 'y+', 'y-', 'z+', 'z-'])
+      .name('cameraViewUp').onChange(function(value){
+        this.camera.position.copy(new THREE.Vector3(0, 0, 0));
+        this.camera.up = this.cameraViewUpChoices[value][0];
+        this.controls.target = this.cameraViewUpChoices[value][1];
+        this.gridHelper.lookAt(this.cameraViewUpChoices[value][2]);
+        if (value.includes('x')){
+          this.gridHelper.rotateX(Math.PI / 2);
+        }
+      }.bind(this));
     // this.gui.add(this.params, 'fogDensity')
     //   .min(0).max(1)
     //   .name('Fog');
@@ -90,9 +109,13 @@ class Viewer {
     folder.add(this.params, 'showGridHelper')
       .name('show');
     folder.add(this.params.gridHelper, 'size')
-      .name('size');
+      .name('size').onChange(function(value){
+        this.initHelpers(true);
+      }.bind(this));
     folder.add(this.params.gridHelper, 'unit')
-      .name('unit');
+      .name('unit').onChange(function(value){
+        this.initHelpers(true);
+      }.bind(this));
   }
 
   initRenderer() {
@@ -121,16 +144,19 @@ class Viewer {
   initCamera() {
     this.points.geometry.computeBoundingBox();
 
-    const camTarget = getBBoxCenter(this.points.geometry);
-    const camPos = autoCameraPos(this.points.geometry);
+    // const camTarget = getBBoxCenter(this.points.geometry);
+    // const camPos = autoCameraPos(this.points.geometry);
+    const camPos = new THREE.Vector3(0, 0, 0);
 
     this.camera.position.copy(camPos);
-    this.camera.up = new THREE.Vector3(0, 0, 1);
-    //this.controls = new THREE.TrackballControls(this.camera, this.renderer.domElement);
-    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.rotateSpeed = 0.3;
-    this.controls.zoomSpeed = 1.5;
-    this.controls.target = camTarget;
+    //this.camera.up = new THREE.Vector3(0, -1, 0);
+    this.camera.up = this.cameraViewUpChoices[this.params.cameraViewUp][0];
+    this.controls = new THREE.TrackballControls(this.camera, this.renderer.domElement);
+    this.controls.dynamicDampingFactor = 0.5;
+    //this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+    //this.controls.rotateSpeed = 0.3;
+    //this.controls.zoomSpeed = 1.5;
+    this.controls.target = this.cameraViewUpChoices[this.params.cameraViewUp][1];
   }
 
   initLight() {
@@ -138,7 +164,7 @@ class Viewer {
     this.scene.add(light);
   }
 
-  initHelpers() {
+  initHelpers(refresh=false) {
     // Remove current helpers
     if (this.gridHelper !== null) {
       this.scene.remove(this.gridHelper);
@@ -149,29 +175,23 @@ class Viewer {
     }
 
     // BBox center
-    var center = getBBoxCenter(this.points.geometry);
+    // var center = getBBoxCenter(this.points.geometry);
     // var extent = getBBoxMaxExtent(this.points.geometry);
 
     // Grid helper
-    const size = this.params.gridHelper.size;
-    const unit = this.params.gridHelper.unit;
-    const divisions = size / unit;
-    if (this.gridHelper === null ||
-      this.gridHelper.size !== size ||
-      this.gridHelper.divisions !== divisions) {
+    if (this.gridHelper === null || refresh) {
+      const size = this.params.gridHelper.size;
+      const unit = this.params.gridHelper.unit;
+      const divisions = size / unit;
       this.gridHelper = new THREE.GridHelper(size, divisions);
-      this.gridHelper.rotateX(Math.PI / 2);
-      // this.gridHelper.position.set(center);
+      this.gridHelper.lookAt(this.cameraViewUpChoices[this.params.cameraViewUp][2]);
       this.gridHelper.name = 'gridHelper';
     }
 
     // Axis helper
-    if (this.axisHelper === null) {
+    if (this.axisHelper === null || refresh) {
       //console.log(extent);
       this.axisHelper = new THREE.AxisHelper();
-      //this.axisHelper.position.x += center.x - extent * 0.5;
-      //this.axisHelper.position.y += center.y - extent * 0.5;
-      //this.axisHelper.position.z += center.z - extent * 0.5;
       this.axisHelper.material.linewidth = 10;
       this.axisHelper.name = 'axisHelper';
     }
@@ -188,6 +208,7 @@ class Viewer {
   }
 
   updateGui() {
+    
     // Points
     if (this.params.showPoints) {
       this.points.material.size = this.params.pointSize;
