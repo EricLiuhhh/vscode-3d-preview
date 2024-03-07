@@ -215,8 +215,10 @@ class Viewer {
     } else {
       this.points.material.size = 0;
     }
-    this.pointsHightlight.material.size = this.points.material.size * 6;
-
+    if (this.pointsHightlight !== null){
+      this.pointsHightlight.material.size = this.points.material.size * 6;
+    }
+    
     if (this.monochrome) {
       this.points.material.color = new THREE.Color(this.params.pointColor);
     }
@@ -257,7 +259,7 @@ class Viewer {
 
     loader.load(fileToLoad, function (object) {
       var geometry;
-      var geometryHighlight;
+      var geometryHighlight = null;
       if (object.isGeometry || object.isBufferGeometry) {
         geometry = object;
       } else if (object.isGroup) {
@@ -311,29 +313,32 @@ class Viewer {
         console.error(e);
         self.monochrome = true;
       }
-
-      var pointsMaterialHighlight = new THREE.PointsMaterial({
-        size: 100,
-        sizeAttenuation: true,
-        //map: sprite,
-        alphaTest: 0.5,
-        transparent: true
-      });
-      self.pointsHightlight = new THREE.Points(geometryHighlight, pointsMaterialHighlight);
-      self.pointsHightlight.name = base + '_points_hightlight';
-
-      try {
-        if (geometryHighlight.getAttribute('color').length > 0) {
-          pointsMaterialHighlight.vertexColors = true;
-        }
-      } catch (e) {
-        console.error(e);
-        self.monochrome = true;
-      }
-
       self.scene.add(self.points);
-      self.scene.add(self.pointsHightlight);
-
+      
+      if (geometryHighlight !== null){
+        var pointsMaterialHighlight = new THREE.PointsMaterial({
+          size: 100,
+          sizeAttenuation: true,
+          //map: sprite,
+          alphaTest: 0.5,
+          transparent: true
+        });
+        self.pointsHightlight = new THREE.Points(geometryHighlight, pointsMaterialHighlight);
+        self.pointsHightlight.name = base + '_points_hightlight';
+  
+        try {
+          if (geometryHighlight.getAttribute('color').length > 0) {
+            pointsMaterialHighlight.vertexColors = true;
+          }
+        } catch (e) {
+          console.error(e);
+          self.monochrome = true;
+        }
+        self.scene.add(self.pointsHightlight);
+      } else {
+        self.pointsHightlight = null;
+      }
+      
       // add mesh
       try {
         geometry.computeVertexNormals();

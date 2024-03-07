@@ -85,17 +85,22 @@
 			if ( colors.length > 0 ) {
 				geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
 			}
+			
+			if (highlight){
+				var geometryHighlight = new THREE.BufferGeometry();
+				geometryHighlight.setAttribute(
+					"position",
+					new THREE.Float32BufferAttribute(verticesHighlight, 3)
+				);
+				if ( colorsHighlight.length > 0 ) {
+					geometryHighlight.setAttribute( 'color', new THREE.Float32BufferAttribute( colorsHighlight, 3 ) );
+				}			
+	
+				return {'geometry': geometry, 'geometryHighlight': geometryHighlight};
+			} else {
+				return geometry;
+			}
 
-            var geometryHighlight = new THREE.BufferGeometry();
-            geometryHighlight.setAttribute(
-                "position",
-                new THREE.Float32BufferAttribute(verticesHighlight, 3)
-            );
-			if ( colorsHighlight.length > 0 ) {
-				geometryHighlight.setAttribute( 'color', new THREE.Float32BufferAttribute( colorsHighlight, 3 ) );
-			}			
-
-            return {'geometry': geometry, 'geometryHighlight': geometryHighlight};
 
 		}
 

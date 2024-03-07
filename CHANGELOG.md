@@ -3,6 +3,11 @@
 All notable changes to the "vscode-3dpreview" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## v0.2.4
+- support highlighting points for `.bin` files 
+
+## v0.2.3
+- support more choices for `.bin` files
 
 ## v0.2.2
 - `*.bin` support.
