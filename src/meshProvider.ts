@@ -150,7 +150,7 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
     
     var extSettings = {};
     if (fileToLoad.toString().split('.').pop()?.toLowerCase() === 'bin') {
-      const featSelect = await vscode.window.showQuickPick(['None', 'intensity', 'r g b', 'intensity time', 'rcs vr vrc time'], {canPickMany: false});
+      const featSelect = await vscode.window.showQuickPick(['None', 'intensity', 'r g b', 'intensity time', 'rcs vr vrc time', 'r g b highlight'], {canPickMany: false});
       extSettings = {...extSettings, ...{ptFeats: featSelect}};
     }
     return `

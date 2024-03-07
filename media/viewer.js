@@ -215,6 +215,7 @@ class Viewer {
     } else {
       this.points.material.size = 0;
     }
+    this.pointsHightlight.material.size = this.points.material.size * 6;
 
     if (this.monochrome) {
       this.points.material.color = new THREE.Color(this.params.pointColor);
@@ -256,6 +257,7 @@ class Viewer {
 
     loader.load(fileToLoad, function (object) {
       var geometry;
+      var geometryHighlight;
       if (object.isGeometry || object.isBufferGeometry) {
         geometry = object;
       } else if (object.isGroup) {
@@ -273,7 +275,11 @@ class Viewer {
           var indices = Array.from(Array(nVerts), (v, k) => k);
           geometry.setIndex(indices);
         }
-      } else {
+      } else if (Object.prototype.toString.call(object) === '[object Object]'){
+        geometry = object.geometry;
+        geometryHighlight = object.geometryHighlight;
+      }
+      else {
         // expect object is THREE.Mesh
         geometry = object.geometry;
       }
@@ -306,7 +312,27 @@ class Viewer {
         self.monochrome = true;
       }
 
+      var pointsMaterialHighlight = new THREE.PointsMaterial({
+        size: 100,
+        sizeAttenuation: true,
+        //map: sprite,
+        alphaTest: 0.5,
+        transparent: true
+      });
+      self.pointsHightlight = new THREE.Points(geometryHighlight, pointsMaterialHighlight);
+      self.pointsHightlight.name = base + '_points_hightlight';
+
+      try {
+        if (geometryHighlight.getAttribute('color').length > 0) {
+          pointsMaterialHighlight.vertexColors = true;
+        }
+      } catch (e) {
+        console.error(e);
+        self.monochrome = true;
+      }
+
       self.scene.add(self.points);
+      self.scene.add(self.pointsHightlight);
 
       // add mesh
       try {

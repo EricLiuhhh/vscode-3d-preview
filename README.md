@@ -8,6 +8,8 @@
 
 ## Description
 
+**This extension is forked from [vscode-3d-preview](https://github.com/tatsy/vscode-3d-preview.git) with additional features. The following is the original README.** 
+
 This extension is inspired by [vscode-3dviewer](https://github.com/stef-levesque/vscode-3dviewer) but has minimal features to preview triangular meshes, and point clouds.
 
 ## Features
