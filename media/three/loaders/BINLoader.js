@@ -96,7 +96,7 @@
 					geometryHighlight.setAttribute( 'color', new THREE.Float32BufferAttribute( colorsHighlight, 3 ) );
 				}			
 	
-				return {'geometry': geometry, 'geometryHighlight': geometryHighlight};
+				return {geometry: geometry, geometryHighlight: geometryHighlight};
 			} else {
 				return geometry;
 			}
