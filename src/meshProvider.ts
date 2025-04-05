@@ -97,6 +97,7 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
       backgroundColor: config.get('backgroundColor', '#0b1447'),
       pointMaxSize: config.get('pointMaxSize', 1.0),
       pointSize: config.get('pointSize', 0.01),
+      camSize: config.get('camSize', 1.0),
       showPoints: config.get('showPoints', false),
       showWireframe: config.get('showWireframe', false),
       showMesh: config.get('showMesh', true),
@@ -129,6 +130,8 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
       this.getMediaWebviewUri(webview, 'three/loaders/PCDLoader.js'),
       this.getMediaWebviewUri(webview, 'three/loaders/PLYLoader.js'),
       this.getMediaWebviewUri(webview, 'three/loaders/BINLoader.js'),
+      this.getMediaWebviewUri(webview, 'three/loaders/JSONPBLoader.js'),
+      this.getMediaWebviewUri(webview, 'three/loaders/CAMPOSELoader.js'),
       this.getMediaWebviewUri(webview, 'utils.js'),
       this.getMediaWebviewUri(webview, 'viewer.js'),
     ];

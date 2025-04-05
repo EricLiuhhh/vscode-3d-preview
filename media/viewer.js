@@ -32,6 +32,17 @@ class Viewer {
       size: 2000,
       unit: 1
     };
+    this.params.cameraPosition = {
+      x: 0,
+      y: 0,
+      z: 0
+    };
+    this.params.cameraTarget = {
+      x: 0,
+      y: 0,
+      z: 0
+    };
+    
     this.cameraViewUpChoices = {
       'x+': [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0)],
       'x-': [new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0)],
@@ -58,9 +69,14 @@ class Viewer {
 
   initGui() {
     // geometry based parameter update
-    const extent = getBBoxMaxExtent(this.points.geometry);
+    var extent;
+    if (this.points !== undefined && this.points !== null) {
+      extent = getBBoxMaxExtent(this.points.geometry);
+    } else {
+      extent = 10;
+    }
     this.params.pointSize = extent / 1000.0;
-    this.params.pointMaxSize = extent / 100.0;
+    this.params.pointMaxSize = extent / 20.0;
 
     // this.params.gridHelper.unit = Math.pow(10, Math.floor(Math.log10(extent)));
     // this.params.gridHelper.size = this.params.gridHelper.unit * 1000;
@@ -74,6 +90,9 @@ class Viewer {
     this.gui.add(this.params, 'pointSize')
       .min(0).max(this.params.pointMaxSize)
       .name('Point size');
+    this.gui.add(this.params, 'camSize')
+      .min(0).max(10)
+      .name('Camera size');
     this.gui.addColor(this.params, 'pointColor')
       .name('Point color');
     this.gui.add(this.params, 'showWireframe')
@@ -96,6 +115,49 @@ class Viewer {
           this.gridHelper.rotateX(Math.PI / 2);
         }
       }.bind(this));
+
+    const cameraPosFolder = this.gui.addFolder('Camera Position');
+    cameraPosFolder.add(this.params.cameraPosition, 'x', -100, 100).step(0.1).onChange(value => {
+      this.camera.position.x = value;
+      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+      const lookAtTarget = new THREE.Vector3().copy(this.camera.position).add(forward);
+      this.controls.target.copy(lookAtTarget);
+      this.controls.update();
+    });
+    cameraPosFolder.add(this.params.cameraPosition, 'y', -100, 100).step(0.1).onChange(value => {
+      this.camera.position.y = value;
+      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+      const lookAtTarget = new THREE.Vector3().copy(this.camera.position).add(forward);
+      this.controls.target.copy(lookAtTarget);
+      this.controls.update();
+    });
+    cameraPosFolder.add(this.params.cameraPosition, 'z', -100, 100).step(0.1).onChange(value => {
+      this.camera.position.z = value;
+      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+      const lookAtTarget = new THREE.Vector3().copy(this.camera.position).add(forward);
+      this.controls.target.copy(lookAtTarget);
+      this.controls.update();
+    });
+
+
+    const cameraTargetFolder = this.gui.addFolder('Camera Taget');
+    cameraTargetFolder.add(this.params.cameraTarget, 'x', -10, 10).step(0.1).onChange(value => {
+      const lookAtTarget = new THREE.Vector3(value, this.params.cameraTarget.y, this.params.cameraTarget.z);
+      this.controls.target.copy(lookAtTarget);
+      this.controls.update();
+    });
+    cameraTargetFolder.add(this.params.cameraTarget, 'y', -10, 10).step(0.1).onChange(value => {
+      const lookAtTarget = new THREE.Vector3(this.params.cameraTarget.x, value, this.params.cameraTarget.z);
+      this.controls.target.copy(lookAtTarget);
+      this.controls.update();
+    });
+    cameraTargetFolder.add(this.params.cameraTarget, 'z', -10, 10).step(0.1).onChange(value => {
+      const lookAtTarget = new THREE.Vector3(this.params.cameraTarget.x, this.params.cameraTarget.y, value);
+      this.controls.target.copy(lookAtTarget);
+      this.controls.update();
+    });
+
+
     // this.gui.add(this.params, 'fogDensity')
     //   .min(0).max(1)
     //   .name('Fog');
@@ -142,7 +204,7 @@ class Viewer {
   }
 
   initCamera() {
-    this.points.geometry.computeBoundingBox();
+    this.points?.geometry.computeBoundingBox();
 
     // const camTarget = getBBoxCenter(this.points.geometry);
     // const camPos = autoCameraPos(this.points.geometry);
@@ -210,6 +272,7 @@ class Viewer {
   updateGui() {
     
     // Points
+    if (this.points !== undefined && this.points !== null) {
     if (this.params.showPoints) {
       this.points.material.size = this.params.pointSize;
     } else {
@@ -218,25 +281,43 @@ class Viewer {
     if (this.pointsHightlight !== null){
       this.pointsHightlight.material.size = this.points.material.size * 6;
     }
+  }
+
+    this.scene.traverse((object) => {
+      if (object instanceof THREE.CameraHelper) {
+        const camera = object.camera; // 获取关联的相机
+        if (camera instanceof THREE.PerspectiveCamera) {
+            camera.near = 0.1 * this.params.camSize;
+            camera.far = 0.2 * this.params.camSize;
+            camera.updateProjectionMatrix();
+            object.update();
+        }
+          // object.geometry.scale(this.params.camSize, this.params.camSize, this.params.camSize);
+          // object.update();
+      }
+    });
     
     if (this.monochrome) {
       this.points.material.color = new THREE.Color(this.params.pointColor);
     }
 
     // Mesh
-    this.scene.remove(this.mesh);
-    if (this.params.showMesh) {
-      this.scene.add(this.mesh);
-    }
+    if (this.mesh !== undefined && this.mesh !== null) {
+      this.scene.remove(this.mesh);
+      if (this.params.showMesh) {
+        this.scene.add(this.mesh);
+      }
+  }
 
     // Wireframe
-    this.scene.remove(this.wireframe);
-    if (this.params.showWireframe) {
-      this.scene.add(this.wireframe);
-    }
-    this.wireframe.material.color = new THREE.Color(this.params.wireframeColor);
-    this.wireframe.material.wireframeLinewidth = this.params.wireframeWidth;
-
+    if (this.wireframe !== undefined && this.wireframe !== null) {
+      this.scene.remove(this.wireframe);
+      if (this.params.showWireframe) {
+        this.scene.add(this.wireframe);
+      }
+      this.wireframe.material.color = new THREE.Color(this.params.wireframeColor);
+      this.wireframe.material.wireframeLinewidth = this.params.wireframeWidth;
+  }
     this.initScene();
     this.initHelpers();
   }
@@ -260,6 +341,7 @@ class Viewer {
     loader.load(fileToLoad, function (object) {
       var geometry;
       var geometryHighlight = null;
+      var boxMeshes = null;
       if (object.isGeometry || object.isBufferGeometry) {
         geometry = object;
       } else if (object.isGroup) {
@@ -279,7 +361,14 @@ class Viewer {
         }
       } else if (Object.prototype.toString.call(object) === '[object Object]'){
         geometry = object.geometry;
-        geometryHighlight = object.geometryHighlight;
+        boxMeshes = object.boxMeshes;
+        //geometryHighlight = object.geometryHighlight;
+        if ('camFrustums' in object){
+          self.camFrustums = object.camFrustums;
+          object.camFrustums.forEach(element => {
+            self.scene.add(element);
+          });
+        }
       }
       else {
         // expect object is THREE.Mesh
@@ -287,7 +376,8 @@ class Viewer {
       }
 
       console.log(geometry);
-
+      if (geometry !== undefined && geometry !== null) {
+    
       // mesh support
       const meshSupport = geometry.index !== null;
       this.params.showMesh = meshSupport;
@@ -314,8 +404,15 @@ class Viewer {
         self.monochrome = true;
       }
       self.scene.add(self.points);
+      if (boxMeshes !== null && boxMeshes !== undefined) {
+        self.boxMeshes = boxMeshes;
+        boxMeshes.forEach(element => {
+          self.scene.add(element);
+        });
+      }
+      }
       
-      if (geometryHighlight !== null){
+      if (geometryHighlight !== null && geometryHighlight !== undefined){
         var pointsMaterialHighlight = new THREE.PointsMaterial({
           size: 100,
           sizeAttenuation: true,

@@ -18,6 +18,8 @@ function isMeshSupport(fileToLoad) {
     case 'xyz': return false;
     case 'pcd': return false;
     case 'bin': return false;
+    case 'jsonpb': return false;
+    case 'campose': return false;
     default:    return true;
   }
 }
@@ -30,6 +32,8 @@ function createModelLoader(fileToLoad, loaderParams = {}) {
     case 'xyz': return new THREE.XYZLoader();
     case 'pcd': return new THREE.PCDLoader();
     case 'off': return new THREE.OFFLoader();
+    case 'jsonpb': return new THREE.JSONPBLoader();
+    case 'campose': return new THREE.CAMPOSELoader();
     default: return new THREE.OBJLoader();
   }
 }
