@@ -3,7 +3,7 @@
   "publisher": "ericliuhhh",
   "displayName": "vscode-3d-preview-eric",
   "description": "VS Code 3D Preview",
-  "version": "0.2.7",
+  "version": "0.3.3",
   "icon": "logo.png",
   "homepage": "https://github.com/EricLiuhhh/vscode-3d-preview.git",
   "repository": {
@@ -73,6 +73,12 @@
           },
           {
             "filenamePattern": "*.campose"
+          },
+          {
+            "filenamePattern": "*.npy"
+          },
+          {
+            "filenamePattern": "*.occ"
           }
         ]
       }
@@ -125,10 +131,29 @@
           "default": "#cc0000",
           "description": "Default point color."
         },
+        "3dpreview.pointShape": {
+          "type": "string",
+          "default": "square",
+          "enum": [
+            "square",
+            "circle"
+          ],
+          "description": "Default point shape."
+        },
         "3dpreview.wireframeColor": {
           "type": "string",
           "default": "#0000ff",
           "description": "Default wireframe color."
+        },
+        "3dpreview.occVoxelSize": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Default voxel size for occupancy visualization loaded from .npy files (.occ remains supported for compatibility)."
+        },
+        "3dpreview.occCenterXY": {
+          "type": "boolean",
+          "default": true,
+          "description": "Center occupancy coordinates along the XY axes to match the Mayavi-style occupancy preset."
         }
       }
     }
@@ -152,6 +177,7 @@
     "@typescript-eslint/parser": "^5.45.0",
     "eslint": "^8.28.0",
     "glob": "^8.0.3",
+    "gsap": "^3.12.7",
     "mocha": "^10.1.0",
     "tslint": "^6.1.3",
     "typescript": "^4.9.3",

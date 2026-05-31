@@ -64,8 +64,12 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
     webviewPanel.webview.options = {
       enableScripts: true,
     };
-    //webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, document);
-    this.getHtmlForWebview(webviewPanel.webview, document).then((value:string) => {webviewPanel.webview.html=value});
+    const html = await this.getHtmlForWebview(webviewPanel.webview, document);
+    if (html === undefined) {
+      webviewPanel.dispose();
+      return;
+    }
+    webviewPanel.webview.html = html;
 
     webviewPanel.webview.onDidReceiveMessage(e => this.onMessage(document, e));
 
@@ -97,6 +101,10 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
       backgroundColor: config.get('backgroundColor', '#0b1447'),
       pointMaxSize: config.get('pointMaxSize', 1.0),
       pointSize: config.get('pointSize', 0.01),
+      pointShape: config.get('pointShape', 'square'),
+      occVoxelSize: config.get('occVoxelSize', 1.0),
+      occCenterXY: config.get('occCenterXY', true),
+      npyVisualizationType: 'occupancy',
       camSize: config.get('camSize', 1.0),
       showPoints: config.get('showPoints', false),
       showWireframe: config.get('showWireframe', false),
@@ -113,9 +121,10 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
     return `<meta id="vscode-3dviewer-data" data-settings="${JSON.stringify(settings).replace(/"/g, '&quot;')}">`;
   }
 
-  private getScripts(webview: vscode.Webview, nonce: string): string {
+  private getScripts(webview: vscode.Webview, nonce: string, cacheBust: string): string {
     const scripts = [
       this.getMediaWebviewUri(webview, 'three/three.min.js'),
+      this.getMediaWebviewUri(webview, 'three/gsap.min.js'),
       this.getMediaWebviewUri(webview, 'three/dat.gui.min.js'),
       this.getMediaWebviewUri(webview, 'three/stats.min.js'),
       this.getMediaWebviewUri(webview, 'three/OrbitControls.js'),
@@ -132,29 +141,55 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
       this.getMediaWebviewUri(webview, 'three/loaders/BINLoader.js'),
       this.getMediaWebviewUri(webview, 'three/loaders/JSONPBLoader.js'),
       this.getMediaWebviewUri(webview, 'three/loaders/CAMPOSELoader.js'),
+      this.getMediaWebviewUri(webview, 'three/loaders/OCCLoader.js'),
       this.getMediaWebviewUri(webview, 'utils.js'),
       this.getMediaWebviewUri(webview, 'viewer.js'),
     ];
-    return scripts.map(source => `<script nonce="${nonce}" src="${source}"></script>`).join('\n');
+    return scripts
+      .map(source => source.with({ query: cacheBust }))
+      .map(source => `<script nonce="${nonce}" src="${source}"></script>`)
+      .join('\n');
   }
 
   /**
    * get the static HTML used in our webviews.
    */
-  private async getHtmlForWebview(webview: vscode.Webview, document: MeshDocument): Promise<string> {
+  private async getHtmlForWebview(webview: vscode.Webview, document: MeshDocument): Promise<string | undefined> {
     const fileToLoad = document.uri.scheme === 'file' ?
       webview.asWebviewUri(vscode.Uri.file(document.uri.fsPath)) :
       document.uri;
 
-    const scriptUri = this.getMediaWebviewUri(webview, 'viewer.js');
-    const styleUri = this.getMediaWebviewUri(webview, 'viewer.css');
+    const cacheBust = `v=${Date.now()}`;
+    const styleUri = this.getMediaWebviewUri(webview, 'viewer.css').with({ query: cacheBust });
     const mediaUri = this.getMediaWebviewUri(webview, '');
     const nonce = getNonce();
     
     var extSettings = {};
-    if (fileToLoad.toString().split('.').pop()?.toLowerCase() === 'bin') {
+    const fileExt = fileToLoad.toString().split('.').pop()?.toLowerCase();
+    if (fileExt === 'bin') {
       const featSelect = await vscode.window.showQuickPick(['None', 'intensity', 'r g b', 'intensity time', 'rcs vr vrc time', 'r g b highlight'], {canPickMany: false});
       extSettings = {...extSettings, ...{ptFeats: featSelect}};
+    }
+    if (fileExt === 'npy') {
+      const visualization = await vscode.window.showQuickPick(
+        [
+          {
+            label: 'occupancy',
+            description: 'Interpret the .npy payload as [N,3] / [N,4] occupancy voxels (.occ is still accepted for compatibility)',
+          },
+        ],
+        {
+          canPickMany: false,
+          title: 'Choose .npy visualization type',
+        }
+      );
+      if (!visualization) {
+        return undefined;
+      }
+      extSettings = {
+        ...extSettings,
+        npyVisualizationType: visualization.label,
+      };
     }
     return `
       <!DOCTYPE html>
@@ -171,7 +206,7 @@ export class MeshViewProvider implements vscode.CustomReadonlyEditorProvider<Mes
         <title>3D Mesh Viewer Light</title>
       </head>
       <body>
-        ${this.getScripts(webview, nonce)}
+        ${this.getScripts(webview, nonce, cacheBust)}
       </body>
       </html>`;
   }

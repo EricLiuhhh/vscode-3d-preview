@@ -20,6 +20,8 @@ function isMeshSupport(fileToLoad) {
     case 'bin': return false;
     case 'jsonpb': return false;
     case 'campose': return false;
+    case 'npy': return false;
+    case 'occ': return false;
     default:    return true;
   }
 }
@@ -34,6 +36,12 @@ function createModelLoader(fileToLoad, loaderParams = {}) {
     case 'off': return new THREE.OFFLoader();
     case 'jsonpb': return new THREE.JSONPBLoader();
     case 'campose': return new THREE.CAMPOSELoader();
+    case 'npy':
+      if ((loaderParams.npyVisualizationType || 'occupancy') === 'occupancy') {
+        return new THREE.OCCLoader();
+      }
+      throw new Error(`Unsupported .npy visualization type: ${loaderParams.npyVisualizationType}`);
+    case 'occ': return new THREE.OCCLoader();
     default: return new THREE.OBJLoader();
   }
 }
